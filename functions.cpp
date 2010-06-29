@@ -41,7 +41,7 @@ static void* FindFunction(char* buffer, u32 length, vector<u32> findme)
 char * FindFunction( char * start , char * end , const u32 * binary , u32 length )
 {
 	if( length > (u32)( end - start ) ) return NULL;
-	for( char * search = start ; (u32)search < ( (u32)end - length ) ; search++ )
+	for( char * search = start ; search < ( end - length ) ; search++ )
 	{
 		u32 * check = (u32*)search;
 		u32 i = 0;
@@ -131,7 +131,7 @@ void FindSig( char* buffer, u32 length, string sig, bool dol )
 	if ( func )
 	{
 		u32 offs = 0;
-		u32 file_offs = (u32)func - (u32)buffer;
+		u32 file_offs = (u32)((char*)func - buffer);
 		if ( dol )
 			offs = GetMemoryAddressDol(buffer, file_offs);
 		else
@@ -145,15 +145,15 @@ void FindSig( char* buffer, u32 length, string sig, bool dol )
 			cout << dec << refs[ii].first << "\t"
 				<< refs[ii].second;
 
-			u32 ref_offs = (u32)func + refs[ii].first;
-			u32 insn = Big32((char*)ref_offs);
+			char* ref_offs = (char*)func + refs[ii].first;
+			u32 insn = Big32(ref_offs);
 			u32 b_amt = insn ^ 0x48000000;
 			if ( b_amt & 0x2000000 )
 				b_amt = b_amt | 0xfd000000;
 			b_amt &= 0xfffffffe;
 			u32 ref_address = offs + refs[ii].first;
 			ref_address += b_amt;
-			if ( insn & 0x48000000 == 0x48000000 )
+			if ( ( insn & 0x48000000 ) == 0x48000000 )
 				cout << "\t" << hex << ref_address;
 
 			//u32 val = GetFileOffsetDol(buffer, address);

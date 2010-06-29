@@ -88,7 +88,7 @@ int main( int argc , char * argv[] )
 	if(osreport)
 	{
 		u32 offs = 0;
-		u32 file_offs = (u32)osreport - (u32)buffer;
+		u32 file_offs = (u32)(osreport - buffer);
 		if(isDol)
 			offs = GetMemoryAddressDol(buffer, file_offs);
 		else
@@ -106,12 +106,12 @@ int main( int argc , char * argv[] )
 	printf("Finding all DEBUGPrint() occurances\n");
 	while( true )
 	{
-		u32 len = (u32)end_pointer - (u32)function_pointer;
+		u32 len = (u32)(end_pointer - function_pointer);
 		function_pointer = FindDebugPrint( function_pointer , len);
 		if(function_pointer)
 		{
 			u32 offs = 0;
-			u32 file_offs= (u32)function_pointer - (u32)buffer;
+			u32 file_offs= (u32)(function_pointer - buffer);
 			if(isDol)
 				offs = GetMemoryAddressDol(buffer, file_offs);
 			else

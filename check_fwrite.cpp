@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 	bool findOSReport = false;
 	if ( argc >= 3 )
 	{
-		u32 n = 2;
+		int n = 2;
 		for(n=2; n < argc; n++)
 		{
 			if (!strncmp(argv[n], "--check", 7))
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 		cout << "can't find __fwrite short" << endl;
 	else
 	{
-		u32 mem = (u32)f_fwrite - (u32)buffer;
+		u32 mem = (u32)(f_fwrite - buffer);
 		mem -= 0x40; //FIXME for fwrite short not being start
 		cout << "__fwrite short found at file offset: 0x"
 			<< hex << mem << endl;
@@ -285,9 +285,9 @@ int main(int argc, char **argv)
 		cout << "can't find IOS_Ioctl short" << endl;
 	else
 	{
-		u32 mem = (u32)f_ios_ioctl - (u32)buffer;
+		u32 mem = (u32)(f_ios_ioctl - buffer);
 		cout << "IOS_Ioctl short found at file offset: 0x"
-			<< hex << ((u32)f_ios_ioctl - (u32)buffer) << endl;
+			<< hex << (u32)(f_ios_ioctl - buffer) << endl;
 		if ( !isDol )
 		{
 			cout << "Memory address: 0x"
@@ -332,13 +332,13 @@ int main(int argc, char **argv)
 	}
 	if ( findOSReport )
 	{
-		void * f_osreport = FindOsReport(buffer, memDumpSize);
+		char * f_osreport = FindOsReport(buffer, memDumpSize);
 		if(!f_osreport)
 		{
 			cout << "can't find OSReport" << endl;
 		} else {
 			cout << "OSReport found at file offset: 0x"
-				<< hex << ((u32)f_osreport - (u32)buffer)
+				<< hex << (u32)(f_osreport - buffer)
 				<< endl;
 		}
 	}
