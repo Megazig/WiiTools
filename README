@@ -1,0 +1,7 @@
+tools for playing with your wii
+=============================
+
+
+compile stuff with ./compile <blah.cpp>
+
+PythonTools folder currently has sel_parser.py
