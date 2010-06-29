@@ -1,0 +1,1 @@
+-i"..\..\include"  -i"." -e534 -e641 -e818 -D_USRDLL -D__NT__ -D__IDP__ -DMAXSTR=1024
