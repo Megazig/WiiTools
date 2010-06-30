@@ -178,27 +178,52 @@ int main(int argc, char **argv)
 	bool checkFunctions = false;
 	bool createPatch = false;
 	bool findOSReport = false;
+
+	bool arguments[argc];
+	for(int ii=0; ii<argc; ii++)
+		arguments[ii] = false;
+
 	if ( argc >= 3 )
 	{
-		int n = 2;
-		for(n=2; n < argc; n++)
+		for(int n=1; n < argc; n++)
 		{
 			if (!strncmp(argv[n], "--check", 7))
+			{
 				checkFunctions = true;
+				arguments[n] = true;
+			}
 			if (!strncmp(argv[n], "--dol", 5))
+			{
 				isDol = true;
+				arguments[n] = true;
+			}
 			if (!strncmp(argv[n], "--patch", 7))
+			{
 				createPatch = true;
+				arguments[n] = true;
+			}
 			if (!strncmp(argv[n], "--osreport", 10))
+			{
 				findOSReport = true;
+				arguments[n] = true;
+			}
 		}
 	}
 
-	ifstream memDump(argv[1], ios::in);
+	int dol_index = 0;
+	for(int ii=1; ii<argc; ii++)
+	{
+		if(!arguments[ii])
+			if(!dol_index)
+				dol_index = ii;
+	}
+
+	ifstream memDump(argv[dol_index], ios::in);
 	if ( !memDump )
 	{
 		cout << "File ";
-		cout << argv[1] << "could not be opened" << endl;
+		cout << argv[dol_index] << " could not be opened"
+			<< endl;
 		return EXIT_FAILURE;
 	}
 	memDump.seekg(0, ifstream::end);
@@ -235,35 +260,14 @@ int main(int argc, char **argv)
 		if ( !isDol )
 		{
 			cout << "Memory address: 0x"
-				<< hex << (0x80000000 | mem)  <<endl;
+				<< hex << (0x80000000 | mem)  << endl;
 			mem_fwrite = 0x80000000 | mem;
 		}
 		else
 		{
 			mem = GetMemoryAddressDol(buffer, mem);
-			/*
-			u32 j = 0;
-			for(int i=0; i<7; i++, j++)
-			{
-#ifdef DEBUG
-				cout << "offsetText[" << i << "]: "
-					<< header.offsetText[i];
-				cout << "\t";
-				cout << "addressText[" << i << "]: "
-					<< header.addressText[i] << endl;
-#endif
-				if((header.offsetText[i] > mem) ||
-						(header.offsetText[i] == 0))
-					break;
-			}
-			j--;
-			mem += header.addressText[j];
-			mem -= header.offsetText[j];
 			cout << "Memory address: 0x"
-				<< hex << mem  <<endl;
-			*/
-			cout << "Memory address: 0x"
-				<< hex << (0x80000000 | mem)  <<endl;
+				<< hex << (0x80000000 | mem)  << endl;
 			mem_fwrite = mem;
 		}
 	}
@@ -293,35 +297,14 @@ int main(int argc, char **argv)
 		if ( !isDol )
 		{
 			cout << "Memory address: 0x"
-				<< hex << (0x80000000 | mem)  <<endl;
+				<< hex << (0x80000000 | mem)  << endl;
 			mem_ios_ioctl = 0x80000000 | mem;
 		}
 		else
 		{
 			mem = GetMemoryAddressDol(buffer, mem);
-			/*
-			u32 j = 0;
-			for(int i=0; i<7; i++, j++)
-			{
-#ifdef DEBUG
-				cout << "offsetText[" << i << "]: "
-					<< header.offsetText[i];
-				cout << "\t";
-				cout << "addressText[" << i << "]: "
-					<< header.addressText[i] << endl;
-#endif
-				if((header.offsetText[i] > mem) ||
-						(header.offsetText[i] == 0))
-					break;
-			}
-			j--;
-			mem += header.addressText[j];
-			mem -= header.offsetText[j];
 			cout << "Memory address: 0x"
-				<< hex << mem  <<endl;
-			*/
-			cout << "Memory address: 0x"
-				<< hex << (0x80000000 | mem)  <<endl;
+				<< hex << (0x80000000 | mem)  << endl;
 			mem_ios_ioctl = mem;
 		}
 	}
@@ -341,9 +324,18 @@ int main(int argc, char **argv)
 		{
 			cout << "can't find OSReport" << endl;
 		} else {
+			u32 mem = (u32)(f_osreport - buffer);
 			cout << "OSReport found at file offset: 0x"
-				<< hex << (u32)(f_osreport - buffer)
-				<< endl;
+				<< hex << mem << endl;
+			if(isDol)
+			{
+				mem = GetMemoryAddressDol(buffer, mem);
+				cout << "Memory address: 0x"
+					<< hex << (0x80000000 | mem)  << endl;
+			} else {
+				cout << "Memory address: 0x"
+					<< hex << (0x80000000 | mem)  << endl;
+			}
 		}
 	}
 	if ( createPatch )
@@ -388,20 +380,5 @@ int main(int argc, char **argv)
 	*/
 
 	delete [] buffer;
-
-	/*
-	bool data_left = (length > 0);
-	while(data_left)
-	{
-		//vector<char> line = readLine( buffer , length );
-		string line = readLine( buffer , length );
-		//printCharVector( line );
-		cout << line << endl;
-		data_left = false;
-	}
-
-	delete [] buffer;
-	*/
-
 	return EXIT_SUCCESS;
 }
