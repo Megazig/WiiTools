@@ -15,7 +15,6 @@ using namespace std;
 int main(int argc, char **argv)
 {
 	bool isDol = false;
-	bool dumpSigs = false;
 	bool createIDC = false;
 	bool ordered = false;
 

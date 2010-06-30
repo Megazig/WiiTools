@@ -338,7 +338,7 @@ void DumpSigInfo( string sig )
 	for(u32 ii=0; ii < refs.size(); ii++)
 	{
 		cout << dec << refs[ii].first << "\t"
-			<< refs[ii].second;
+			<< refs[ii].second << endl;;
 	}
 }
 
@@ -544,5 +544,39 @@ m_sig ParseMegaLine(char* buffer, u32 length, string sig, bool dol)
 	}
 	msig.refs = refs;
 	return msig;
+}
+
+function_instance FindMSig(char* buffer, u32 length, u32 offset, m_sig sig, bool dol)
+{
+#if 0
+	cout << "buffer: " << hex << (u32)buffer << " [DEBUG]" << endl
+		<< "length: " << hex << length << " [DEBUG]" << endl
+		<< "offset: " << hex << offset << " [DEBUG]" << endl
+		<< "code: " << sig.code << " [DEBUG]" << endl;
+#endif
+	function_instance instance;
+	instance.sig = sig;
+	instance.buffer_location = NULL;
+	instance.memory_address = 0;
+	vector<u32> binary = GetU32Vector( sig.code );
+
+	void * func = NULL;
+	func = FindFunction( buffer , length , binary );
+#if 0
+	cout << sig.funcName << ": " << hex << (u32)func
+		<< " [DEBUG]" << endl;
+#endif
+	if ( func )
+	{
+		instance.buffer_location = (char*)func - offset;
+		u32 offs = 0;
+		u32 file_offs = (u32)((char*)func - buffer) + offset;
+		if ( dol )
+			offs=GetMemoryAddressDol(buffer-offset, file_offs);
+		else
+			offs = file_offs + 0x80000000;
+		instance.memory_address = offs;
+	}
+	return instance;
 }
 
