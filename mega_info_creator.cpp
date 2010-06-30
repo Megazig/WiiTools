@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 {
 	bool isDol = false;
 	bool dumpSigs = false;
+	bool createIDC = false;
 
 	if ( argc < 3 )
 	{
@@ -24,6 +25,7 @@ int main(int argc, char **argv)
 		cout << "options:" << endl;
 		cout << "\t--dol     using a dol" << endl;
 		cout << "\t--sigs    dump sigs" << endl;
+		cout << "\t--idc     create idc file" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -35,6 +37,8 @@ int main(int argc, char **argv)
 				isDol = true;
 			if ( !strncmp(argv[n], "--sigs", 6) )
 				dumpSigs = true;
+			if ( !strncmp(argv[n], "--idc", 5) )
+				createIDC = true;
 		}
 	}
 
@@ -84,7 +88,10 @@ int main(int argc, char **argv)
 
 	// DO SOMETHING COOL //
 	for(u32 stri = 0; stri < sigs.size(); stri++)
-		FindSig( buffer , memDumpSize, sigs[stri] , isDol );
+		if(createIDC)
+			CreateIDC(buffer, memDumpSize, sigs[stri], isDol);
+		else
+			FindSig(buffer, memDumpSize, sigs[stri], isDol);
 
 	delete [] buffer;
 	return EXIT_SUCCESS;
