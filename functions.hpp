@@ -34,5 +34,6 @@ string GetSigName( string sig );
 bool FindSigByName( string sig, string sigName );
 char* FindBinary( char* start , u32 buffer_len , char* binary , u32 length );
 char* FindBinary( char* start , u32 buffer_len , const u32* binary , u32 length );
+void CreateIDC( char* buffer, u32 length, string sig, bool dol );
 
 #endif

@@ -423,3 +423,86 @@ char * FindBinary( char * start , u32 buffer_len , const u32 * binary , u32 leng
 	}
 	return NULL;
 }
+
+void CreateIDC( char* buffer, u32 length, string sig, bool dol )
+{
+	if ( sig.length() < 5 )
+		return;
+	//FIXME
+	if ( sig == "---" )
+		return;
+
+	stringstream ss(sig);
+	string code , unk1 , funcName;
+	char space = ' ';
+	getline( ss , code , space );
+	getline( ss , unk1 , space );
+	getline( ss , funcName , space );
+	stripCarriageReturns( funcName );
+	if ( FUNCTION_NAME_LIMIT < funcName.length() )
+		return;
+	vector< pair<int, string> > refs;
+	while( !ss.eof() )
+	{
+		//FIXME
+		string tempNum, tempString;
+		getline( ss , tempNum , space );
+		u32 num = strtoul(tempNum.c_str() + 1, NULL, 16);
+		getline( ss , tempString , space );
+		stripCarriageReturns( tempString );
+		refs.push_back( pair<int, string>(num, tempString) );
+		//refs.push_back( tempString );
+	}
+#ifdef DEBUG
+	cout << "Size of refs: " << dec << refs.size() << endl;
+	cout << funcName << endl;
+#endif
+	vector<u32> binary = GetU32Vector( code );
+
+	void * func = NULL;
+	func = FindFunction( buffer , length , binary );
+	if ( func )
+	{
+		u32 offs = 0;
+		u32 file_offs = (u32)((char*)func - buffer);
+		if ( dol )
+			offs = GetMemoryAddressDol(buffer, file_offs);
+		else
+			offs = file_offs + 0x80000000;
+		cout << "MakeFunction(0x" << hex << offs <<
+			", BADADDR); MakeName(0x" << hex << offs <<
+			", \"" << funcName << "\");" << endl;
+		for(u32 ii=0; ii < refs.size(); ii++)
+		{
+			/*
+			cout << dec << refs[ii].first << "\t"
+				<< refs[ii].second;
+			*/
+
+			char* ref_offs = (char*)func + refs[ii].first;
+			u32 insn = Big32(ref_offs);
+			u32 b_amt = insn ^ 0x48000000;
+			if ( b_amt & 0x2000000 )
+				b_amt = b_amt | 0xfd000000;
+			b_amt &= 0xfffffffe;
+			u32 ref_address = offs + refs[ii].first;
+			ref_address += b_amt;
+			if ( ( insn & 0x48000000 ) == 0x48000000 )
+			{
+				//cout << "\t" << hex << ref_address;
+				cout << "MakeFunction(0x" << hex <<
+					ref_address << ", BADADDR); MakeName(0x" <<
+					hex << ref_address << ", \"" <<
+					refs[ii].second << "\");" << endl;
+			}
+
+			//u32 val = GetFileOffsetDol(buffer, address);
+			//cout << endl;
+		}
+		/* show xrefs */
+	}
+#ifdef QUITME
+	exit(1);
+#endif
+}
+
