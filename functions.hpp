@@ -21,6 +21,21 @@ using namespace std;
 #define CMP_BAD_REFOFFS -4
 #define CMP_BAD_SIG -99
 
+typedef struct
+{
+	string code;
+	string unk1;
+	string funcName;
+	vector< pair<int, string> > refs;
+} m_sig;
+
+typedef struct
+{
+	m_sig sig;
+	void* buffer_location;
+	u32   memory_address;
+} function_instance;
+
 vector<u32> GetU32Vector( string code );
 void* FindFunction(char* buffer, u32 length, vector<u32> findme);
 char* FindFunction( char* start , char* end , const u32* binary , u32 length );
@@ -35,5 +50,6 @@ bool FindSigByName( string sig, string sigName );
 char* FindBinary( char* start , u32 buffer_len , char* binary , u32 length );
 char* FindBinary( char* start , u32 buffer_len , const u32* binary , u32 length );
 void CreateIDC( char* buffer, u32 length, string sig, bool dol );
+m_sig ParseMegaLine(char* buffer, u32 length, string sig, bool dol);
 
 #endif

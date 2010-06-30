@@ -506,3 +506,43 @@ void CreateIDC( char* buffer, u32 length, string sig, bool dol )
 #endif
 }
 
+m_sig ParseMegaLine(char* buffer, u32 length, string sig, bool dol)
+{
+	m_sig msig;
+	msig.code = "";
+	msig.unk1 = "0000:";
+	msig.funcName = "";
+	vector< pair<int, string> > refs;
+	msig.refs = refs;
+	if ( sig.length() < 5 )
+		return msig;
+	//FIXME
+	if ( sig == "---" )
+		return msig;
+
+	stringstream ss(sig);
+	string code , unk1 , funcName;
+	char space = ' ';
+	getline( ss , code , space );
+	getline( ss , unk1 , space );
+	getline( ss , funcName , space );
+	stripCarriageReturns( funcName );
+	msig.code = code;
+	msig.unk1 = unk1;
+	msig.funcName = funcName;
+
+	while( !ss.eof() )
+	{
+		//FIXME
+		string tempNum, tempString;
+		getline( ss , tempNum , space );
+		u32 num = strtoul(tempNum.c_str() + 1, NULL, 16);
+		getline( ss , tempString , space );
+		stripCarriageReturns( tempString );
+		refs.push_back( pair<int, string>(num, tempString) );
+		//refs.push_back( tempString );
+	}
+	msig.refs = refs;
+	return msig;
+}
+

@@ -17,6 +17,12 @@ int main(int argc, char **argv)
 	bool isDol = false;
 	bool dumpSigs = false;
 	bool createIDC = false;
+	bool ordered = false;
+
+	//FIXME
+	bool arguments[argc];
+	for(int ii=0; ii<argc; ii++)
+		arguments[ii] = false;
 
 	if ( argc < 3 )
 	{
@@ -26,27 +32,56 @@ int main(int argc, char **argv)
 		cout << "\t--dol     using a dol" << endl;
 		cout << "\t--sigs    dump sigs" << endl;
 		cout << "\t--idc     create idc file" << endl;
+		cout << "\t--ordered [not functional yet]" << endl;
 		return EXIT_FAILURE;
 	}
 
 	if ( argc >= 4 )
 	{
-		for(int n = 3; n < argc; n++)
+		for(int n = 1; n < argc; n++)
 		{
 			if ( !strncmp(argv[n], "--dol", 5) )
+			{
 				isDol = true;
+				arguments[n] = true;
+			}
 			if ( !strncmp(argv[n], "--sigs", 6) )
+			{
 				dumpSigs = true;
+				arguments[n] = true;
+			}
 			if ( !strncmp(argv[n], "--idc", 5) )
+			{
 				createIDC = true;
+				arguments[n] = true;
+			}
+			if ( !strncmp(argv[n], "--ordered", 9) )
+			{
+				ordered = true;
+				arguments[n] = true;
+			}
 		}
 	}
 
-	ifstream myInputFile(argv[1], ios::in);
+	int mega_index = 0;
+	int dol_index = 0;
+	for(int ii = 0; ii < argc; ii++)
+	{
+		if(arguments[ii] == false)
+		{
+			if(!mega_index)
+				mega_index = ii;
+			else if(!dol_index)
+				dol_index = ii;
+		}
+	}
+
+	ifstream myInputFile(argv[mega_index], ios::in);
 	if ( !myInputFile )
 	{
 		cout << "File ";
-		cout << argv[1] << "could not be opened" << endl;
+		cout << argv[mega_index] << "could not be opened"
+			<< endl;
 		return EXIT_FAILURE;
 	}
 
@@ -59,16 +94,12 @@ int main(int argc, char **argv)
 	}
 	myInputFile.close();
 
-#if 0
-	printStringVector( sigs );
-	exit(EXIT_SUCCESS);
-#endif
-
-	ifstream memDump(argv[2], ios::in);
+	ifstream memDump(argv[dol_index], ios::in);
 	if ( !memDump )
 	{
 		cout << "File ";
-		cout << argv[2] << "could not be opened" << endl;
+		cout << argv[dol_index] << "could not be opened"
+			<< endl;
 		return EXIT_FAILURE;
 	}
 	memDump.seekg(0, ifstream::end);
@@ -96,3 +127,4 @@ int main(int argc, char **argv)
 	delete [] buffer;
 	return EXIT_SUCCESS;
 }
+
