@@ -22,7 +22,7 @@ vector<u32> GetU32Vector( string code )
 	return binary;
 }
 
-static void* FindFunction(char* buffer, u32 length, vector<u32> findme)
+void* FindFunction(char* buffer, u32 length, vector<u32> findme)
 {
 	u32 findme_length = findme.size();
 	for (u32* location = (u32*)buffer; (u8*)location < (u8*)buffer + length - findme_length * 4; location++)

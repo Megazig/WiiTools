@@ -22,7 +22,7 @@ using namespace std;
 #define CMP_BAD_SIG -99
 
 vector<u32> GetU32Vector( string code );
-static void* FindFunction(char* buffer, u32 length, vector<u32> findme);
+void* FindFunction(char* buffer, u32 length, vector<u32> findme);
 char* FindFunction( char* start , char* end , const u32* binary , u32 length );
 char* FindFunction(char* buffer, u32 length, const u32* findme, u32 findme_length);
 char* CheckFunction(char* buffer, u32 length, const u32* findme, u32 findme_length);
