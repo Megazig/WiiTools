@@ -16,7 +16,6 @@ int main(int argc, char **argv)
 {
 	bool isDol = false;
 	bool createIDC = false;
-	bool ordered = false;
 
 	//FIXME
 	bool arguments[argc];
@@ -29,9 +28,7 @@ int main(int argc, char **argv)
 			" <mega file> <dump or dol> [options]" << endl;
 		cout << "options:" << endl;
 		cout << "\t--dol     using a dol" << endl;
-		cout << "\t--idc     create idc file [not working]"
-			<< endl;
-		cout << "\t--ordered [not functional yet]" << endl;
+		cout << "\t--idc     create idc file" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -47,11 +44,6 @@ int main(int argc, char **argv)
 			if ( !strncmp(argv[n], "--idc", 5) )
 			{
 				createIDC = true;
-				arguments[n] = true;
-			}
-			if ( !strncmp(argv[n], "--ordered", 9) )
-			{
-				ordered = true;
 				arguments[n] = true;
 			}
 		}
@@ -105,6 +97,12 @@ int main(int argc, char **argv)
 	memDump.close();
 
 	// DO SOMETHING COOL //
+	if(createIDC)
+	{
+		cout << "#include <idc.idc>" << endl;
+		cout << "static main() {" << endl;
+	}
+
 	char* tmpBuf = buffer;
 	u32 size = memDumpSize;
 	u32 offset = 0;
@@ -113,13 +111,29 @@ int main(int argc, char **argv)
 		m_sig sig = ParseMegaLine(tmpBuf, size, sigs[stri], isDol);
 		function_instance instance = FindMSig(tmpBuf, size, offset, sig, isDol);
 		if(instance.buffer_location)
-			cout << instance.sig.funcName << ": " << hex << instance.memory_address << endl;
+		{
+			if(createIDC)
+			{
+				cout << "\tMakeFunction(0x" << hex <<
+					instance.memory_address <<
+					", BADADDR); MakeName(0x" << hex <<
+					instance.memory_address << ", \"" <<
+					instance.sig.funcName << "\");" << endl;
+			} else {
+				cout << instance.sig.funcName << ": " << hex << instance.memory_address << endl;
+			}
+		}
 		if(instance.buffer_location)
 		{
 			tmpBuf = instance.buffer_location + 4;
 			offset = (u32)(instance.buffer_location - buffer) + 4;
 			size = memDumpSize - offset;
 		}
+	}
+
+	if(createIDC)
+	{
+		cout << "}" << endl;
 	}
 
 	delete [] buffer;
