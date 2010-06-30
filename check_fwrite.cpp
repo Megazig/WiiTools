@@ -262,6 +262,8 @@ int main(int argc, char **argv)
 			cout << "Memory address: 0x"
 				<< hex << mem  <<endl;
 			*/
+			cout << "Memory address: 0x"
+				<< hex << (0x80000000 | mem)  <<endl;
 			mem_fwrite = mem;
 		}
 	}
@@ -318,6 +320,8 @@ int main(int argc, char **argv)
 			cout << "Memory address: 0x"
 				<< hex << mem  <<endl;
 			*/
+			cout << "Memory address: 0x"
+				<< hex << (0x80000000 | mem)  <<endl;
 			mem_ios_ioctl = mem;
 		}
 	}
