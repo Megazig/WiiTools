@@ -2,7 +2,7 @@ tools for playing with your wii
 =============================
 
 
-compile stuff with ./compile <blah.cpp>
+compile stuff with ./compile.pl <blah.cpp>
 	-OR-
 use Makefile for example apps
 
