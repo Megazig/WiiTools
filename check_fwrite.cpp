@@ -18,8 +18,13 @@
 #include "endian.hpp"
 #include "dol.hpp"
 #include "functions.hpp"
+#include "wii.hpp"
 
 using namespace std;
+
+#define FWRITEKNOWN 0x8045ac38
+#define IOSKNOWN 0x804bc930
+#define OSKNOWN 0x804cd620
 
 char* FindIosIoctlShort(char* buffer, u32 length)
 {
@@ -160,6 +165,20 @@ char* CheckIosIoctl(char* buffer, u32 length)
 	return CheckFunction(buffer,length, findme, findme_length);
 }
 
+char* CheckOsReport(char* buffer, u32 length)
+{
+	static const u32 findme[] = {
+	0x9421ff80,0x7c0802a6,0x90010084,0x93e1007c,0x40860024,0xd8210028,0xd8410030,0xd8610038,
+	0xd8810040,0xd8a10048,0xd8c10050,0xd8e10058,0xd9010060,0x39610088,0x38010008,0x3d800100,
+	0x90610008,0x3be10068,0x9081000c,0x7fe4fb78,0x90a10010,0x90c10014,0x90e10018,0x9101001c,
+	0x91210020,0x91410024,0x91810068,0x9161006c,0x90010070,0x00000000,0x80010084,0x83e1007c,
+	0x7c0803a6,0x38210080,0x4e800020
+	};
+	u32 findme_length = 35;
+
+	return CheckFunction(buffer,length, findme, findme_length);
+}
+
 int main(int argc, char **argv)
 {
 	if ( argc < 2 )
@@ -253,8 +272,12 @@ int main(int argc, char **argv)
 		cout << "can't find __fwrite short" << endl;
 	else
 	{
-		u32 mem = (u32)(f_fwrite - buffer);
-		mem -= 0x40; //FIXME for fwrite short not being start
+		u32 delta = (u32)(f_fwrite - buffer);
+		char* start = FindStackUpdateReverse(f_fwrite, delta);
+		cout << "Should be 0x9421.... : 0x" << hex << Big32(start) << endl;
+		if(!start)
+			start = f_fwrite;
+		u32 mem = (u32)(start - buffer);
 		cout << "__fwrite short found at file offset: 0x"
 			<< hex << mem << endl;
 		if ( !isDol )
@@ -274,7 +297,9 @@ int main(int argc, char **argv)
 	if ( checkFunctions )
 	{
 		f_fwrite = NULL;
-		f_fwrite = CheckFwrite(buffer+0x56AC,memDumpSize);
+		u32 ofs = GetFileOffsetDol(buffer, FWRITEKNOWN);
+		cout << "checking file offset: " << hex << ofs << endl;
+		f_fwrite = CheckFwrite(buffer+ofs,memDumpSize);
 		if(!f_fwrite)
 			cout << "__fwrite didn't match" << endl;
 		else
@@ -311,7 +336,9 @@ int main(int argc, char **argv)
 	if ( checkFunctions )
 	{
 		f_ios_ioctl = NULL;
-		f_ios_ioctl =CheckIosIoctl(buffer+0x371e0,memDumpSize);
+		u32 ofs = GetFileOffsetDol(buffer, IOSKNOWN);
+		cout << "checking file offset: " << hex << ofs << endl;
+		f_ios_ioctl =CheckIosIoctl(buffer+ofs,memDumpSize);
 		if(!f_ios_ioctl)
 			cout << "can't find IOS_Ioctl" << endl;
 		else
@@ -336,6 +363,17 @@ int main(int argc, char **argv)
 				cout << "Memory address: 0x"
 					<< hex << (0x80000000 | mem)  << endl;
 			}
+		}
+		if(checkFunctions)
+		{
+			f_osreport = NULL;
+			u32 ofs = GetFileOffsetDol(buffer, 0x804cd620);
+			cout << "checking file offset: " << hex << ofs << endl;
+			f_osreport =CheckOsReport(buffer+ofs,memDumpSize);
+			if(!f_osreport)
+				cout << "can't find OSReport" << endl;
+			else
+				cout << "OSReport found" << endl;
 		}
 	}
 	if ( createPatch )

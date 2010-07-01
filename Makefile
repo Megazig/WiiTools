@@ -1,7 +1,7 @@
 CXX			:=	g++
 COMMON		:=	common.cpp endian.cpp wii.cpp dol.cpp functions.cpp
 CXXFLAGS	:=	-O2 -Wall
-PROGRAMS	:=	check_fwrite create_jump find_debug_functions mega_compare mega_info_creator check_sdk_mega
+PROGRAMS	:=	check_fwrite create_jump find_debug_functions mega_compare mega_info_creator check_sdk_mega create_stack_update_idc
 
 DEPSDIR		:=	build
 DEPENDS		:=	$(foreach file,$(PROGRAMS),$(DEPSDIR)/$(file).d)

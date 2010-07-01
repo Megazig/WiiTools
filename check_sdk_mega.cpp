@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 {
 	bool isDol = false;
 	bool createIDC = false;
+	bool ordered = false;
 
 	//FIXME
 	bool arguments[argc];
@@ -29,6 +30,7 @@ int main(int argc, char **argv)
 		cout << "options:" << endl;
 		cout << "\t--dol     using a dol" << endl;
 		cout << "\t--idc     create idc file" << endl;
+		cout << "\t--ordered check functions in order" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -44,6 +46,11 @@ int main(int argc, char **argv)
 			if ( !strncmp(argv[n], "--idc", 5) )
 			{
 				createIDC = true;
+				arguments[n] = true;
+			}
+			if ( !strncmp(argv[n], "--ordered", 9) )
+			{
+				ordered = true;
 				arguments[n] = true;
 			}
 		}
@@ -123,7 +130,7 @@ int main(int argc, char **argv)
 				cout << instance.sig.funcName << ": " << hex << instance.memory_address << endl;
 			}
 		}
-		if(instance.buffer_location)
+		if((instance.buffer_location) && (ordered))
 		{
 			tmpBuf = instance.buffer_location + 4;
 			offset = (u32)(instance.buffer_location - buffer) + 4;
