@@ -17,6 +17,7 @@ int main(int argc, char **argv)
 	bool isDol = false;
 	bool createIDC = false;
 	bool ordered = false;
+	bool expanded = false;
 
 	//FIXME
 	bool arguments[argc];
@@ -28,9 +29,10 @@ int main(int argc, char **argv)
 		cout << "Usage: " << argv[0] <<
 			" <mega file> <dump or dol> [options]" << endl;
 		cout << "options:" << endl;
-		cout << "\t--dol     using a dol" << endl;
-		cout << "\t--idc     create idc file" << endl;
-		cout << "\t--ordered check functions in order" << endl;
+		cout << "\t--dol       using a dol" << endl;
+		cout << "\t--idc       create idc file" << endl;
+		cout << "\t--ordered   do functions in order" << endl;
+		cout << "\t--expanded  add refs to list" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -51,6 +53,11 @@ int main(int argc, char **argv)
 			if ( !strncmp(argv[n], "--ordered", 9) )
 			{
 				ordered = true;
+				arguments[n] = true;
+			}
+			if ( !strncmp(argv[n], "--expanded", 10) )
+			{
+				expanded = true;
 				arguments[n] = true;
 			}
 		}
@@ -128,6 +135,24 @@ int main(int argc, char **argv)
 					instance.sig.funcName << "\");" << endl;
 			} else {
 				cout << instance.sig.funcName << ": " << hex << instance.memory_address << endl;
+				if(expanded)
+				{
+					for(u32 ii=0; ii<instance.sig.refs.size(); ii++)
+					{
+						cout << "\t+" << hex << instance.sig.refs[ii].first << "\t" << instance.sig.refs[ii].second;
+						char* ref_offs = instance.buffer_location + instance.sig.refs[ii].first;
+						u32 insn = Big32(ref_offs);
+						u32 b_amt = insn ^ 0x48000000;
+						if ( b_amt & 0x2000000 )
+							b_amt = b_amt | 0xfd000000;
+						b_amt &= 0xfffffffe;
+						u32 ref_address = instance.memory_address + instance.sig.refs[ii].first;
+						ref_address += b_amt;
+						if ( ( insn & 0x48000000 ) == 0x48000000 )
+							cout << "\t" << hex << ref_address;
+						cout << endl;
+					}
+				}
 			}
 		}
 		if((instance.buffer_location) && (ordered))

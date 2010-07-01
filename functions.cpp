@@ -568,7 +568,7 @@ function_instance FindMSig(char* buffer, u32 length, u32 offset, m_sig sig, bool
 #endif
 	if ( func )
 	{
-		instance.buffer_location = (char*)func - offset;
+		instance.buffer_location = (char*)func;
 		u32 offs = 0;
 		u32 file_offs = (u32)((char*)func - buffer) + offset;
 		if ( dol )
