@@ -40,6 +40,24 @@ class DOLHeader(object):
 		out += "BSS size: %08x\n" % self.sizeBSS
 		out += "entrypoint: %08x\n" % self.entrypoint
 		return out
+	def PrettyPrint(self):
+		out  = ""
+		out += "offset-- : address- : size----\tText Table\n"
+		for x in xrange(7):
+			out += "%08x" % self.offsetText[x]
+			out += " : %08x" % self.addressText[x]
+			out += " : %08x\n" % self.sizeText[x]
+		out += "\n"
+		out += "offset-- : address- : size----\tData Table\n"
+		for x in xrange(11):
+			out += "%08x" % self.offsetData[x]
+			out += " : %08x" % self.addressData[x]
+			out += " : %08x\n" % self.sizeData[x]
+		out += "\n"
+		out += "BSS address: %08x\n" % self.addressBSS
+		out += "BSS size: %08x\n" % self.sizeBSS
+		out += "entrypoint: %08x\n" % self.entrypoint
+		return out
 	def sorted(self, sort=True):
 		out = []
 		for x in xrange(7):
@@ -52,3 +70,22 @@ class DOLHeader(object):
 			out.sort()
 		return out
 
+def main():
+	import sys
+	if len(sys.argv) == 1:
+		print "Usage: %s <dol>" % sys.argv[0]
+		sys.exit(-1)
+	
+	fp = open(sys.argv[1], 'rb')
+	if fp:
+		data = fp.read(0x100)
+	else:
+		print "Failed to open %s" % sys.arv[1]
+		sys.exit(-1)
+	fp.close()
+
+	dol = DOLHeader(data)
+	print dol.PrettyPrint()
+
+if __name__ == "__main__":
+	main()
