@@ -70,8 +70,10 @@ static const char * const SkipPrefixList[] =
 {
 	"unknown",
 	"sub_",
+	"loc_",
 	"byte_",
 	"dword_",
+	"word_",
 	NULL
 };
 
