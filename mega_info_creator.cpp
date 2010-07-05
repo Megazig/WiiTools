@@ -117,12 +117,20 @@ int main(int argc, char **argv)
 		exit(EXIT_SUCCESS);
 	}
 
+	if (createIDC) {
+		cout << "#include <idc.idc>" << endl;
+		cout << "static main() {" << endl;
+	}
+
 	// DO SOMETHING COOL //
 	for(u32 stri = 0; stri < sigs.size(); stri++)
 		if(createIDC)
 			CreateIDC(buffer, memDumpSize, sigs[stri], isDol);
 		else
 			FindSig(buffer, memDumpSize, sigs[stri], isDol);
+
+	if (createIDC)
+		cout << "}" << endl;
 
 	delete [] buffer;
 	return EXIT_SUCCESS;
