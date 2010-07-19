@@ -133,6 +133,29 @@ int main(int argc, char **argv)
 					", BADADDR); MakeName(0x" << hex <<
 					instance.memory_address << ", \"" <<
 					instance.sig.funcName << "\");" << endl;
+				if(expanded)
+				{
+					for(u32 ii=0; ii<instance.sig.refs.size(); ii++)
+					{
+						char* ref_offs = instance.buffer_location + instance.sig.refs[ii].first;
+						u32 insn = Big32(ref_offs);
+						u32 b_amt = insn ^ 0x48000000;
+						if ( b_amt & 0x2000000 )
+							b_amt = b_amt | 0xfd000000;
+						b_amt &= 0xfffffffe;
+						u32 ref_address = instance.memory_address + instance.sig.refs[ii].first;
+						ref_address += b_amt;
+						if ( ( insn & 0x48000000 ) == 0x48000000 )
+						{
+				cout << "\tMakeFunction(0x" << hex <<
+					ref_address <<
+					", BADADDR); MakeName(0x" << hex <<
+					ref_address << ", \"" <<
+					instance.sig.refs[ii].second << "\");" <<
+					endl;
+						}
+					}
+				}
 			} else {
 				cout << instance.sig.funcName << ": " << hex << instance.memory_address << endl;
 				if(expanded)
