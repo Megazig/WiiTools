@@ -26,24 +26,55 @@ u32 GetMemoryAddressDol( char* buffer, u32 offset)
 
 	FixDolHeaderEndian(&header);
 
+	u32 addresses[18];
+	u32 offsets[18];
+	memset(addresses, 0, 18);
+	memset(offsets, 0, 18);
+	u32 counter = 0;
+	for(int ii=0; ii<7; ii++) {
+		if(header.addressText[ii] == 0)
+			continue;
+		offsets[counter] = header.offsetText[ii];
+		addresses[counter] = header.addressText[ii];
+		counter++;
+	}
+	for(int ii=0; ii<11; ii++) {
+		if(header.addressText[ii] == 0)
+			continue;
+		offsets[counter] = header.offsetData[ii];
+		addresses[counter] = header.addressData[ii];
+		counter++;
+	}
+	counter--;
+	
+	for(u32 ii=0; ii<counter; ii++) {
+		for(u32 jj=1; jj<counter; jj++) {
+			if(offsets[jj] < offsets[jj-1]) {
+				u32 temp = offsets[jj-1];
+				offsets[jj-1] = offsets[jj];
+				offsets[jj] = temp;
+			}
+		}
+	}
+
 	u32 mem = 0;
 	u32 j = 0;
-	for(int i=0; i<7; i++, j++)
+	for(u32 i=0; i<counter; i++, j++)
 	{
 #ifdef DEBUG
 		cout << "offsetText[" << i << "]: "
-			<< header.offsetText[i];
+			<< offsets[i];
 		cout << "\t";
 		cout << "addressText[" << i << "]: "
-			<< header.addressText[i] << endl;
+			<< addresses[i] << endl;
 #endif
-		if((header.offsetText[i] > offset) ||
-				(header.offsetText[i] == 0))
+		if((offsets[i] > offset) ||
+				(offsets[i] == 0))
 			break;
 	}
 	j--;
-	offset += header.addressText[j];
-	offset -= header.offsetText[j];
+	offset += addresses[j];
+	offset -= offsets[j];
 #ifdef DEBUG
 	cout << "Memory address: 0x"
 		<< hex << offset  <<endl;
@@ -59,24 +90,55 @@ u32 GetFileOffsetDol( char* buffer, u32 address)
 
 	FixDolHeaderEndian(&header);
 
+	u32 addresses[18];
+	u32 offsets[18];
+	memset(addresses, 0, 18);
+	memset(offsets, 0, 18);
+	u32 counter = 0;
+	for(int ii=0; ii<7; ii++) {
+		if(header.addressText[ii] == 0)
+			continue;
+		offsets[counter] = header.offsetText[ii];
+		addresses[counter] = header.addressText[ii];
+		counter++;
+	}
+	for(int ii=0; ii<11; ii++) {
+		if(header.addressText[ii] == 0)
+			continue;
+		offsets[counter] = header.offsetData[ii];
+		addresses[counter] = header.addressData[ii];
+		counter++;
+	}
+	counter--;
+	
+	for(u32 ii=0; ii<counter; ii++) {
+		for(u32 jj=1; jj<counter; jj++) {
+			if(offsets[jj] < offsets[jj-1]) {
+				u32 temp = offsets[jj-1];
+				offsets[jj-1] = offsets[jj];
+				offsets[jj] = temp;
+			}
+		}
+	}
+
 	u32 mem = 0;
 	u32 j = 0;
-	for(int i=0; i<7; i++, j++)
+	for(int i=0; i<counter; i++, j++)
 	{
 #ifdef DEBUG
 		cout << "offsetText[" << i << "]: "
-			<< header.offsetText[i];
+			<< offsets[i];
 		cout << "\t";
 		cout << "addressText[" << i << "]: "
-			<< header.addressText[i] << endl;
+			<< addresses[i] << endl;
 #endif
-		if((header.addressText[i] > address) ||
-				(header.addressText[i] == 0))
+		if((addresses[i] > address) ||
+				(addresses[i] == 0))
 			break;
 	}
 	j--;
-	address -= header.addressText[j];
-	address += header.offsetText[j];
+	address -= addresses[j];
+	address += offsets[j];
 #ifdef DEBUG
 	cout << "File offset: 0x"
 		<< hex << address  <<endl;
