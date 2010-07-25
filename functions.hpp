@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "types.hpp"
-#include "endian.h"
+#include "endian.hpp"
 #include "common.hpp"
 #include "dol.hpp"
 
