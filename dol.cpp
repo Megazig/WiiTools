@@ -45,14 +45,17 @@ u32 GetMemoryAddressDol( char* buffer, u32 offset)
 		addresses[counter] = header.addressData[ii];
 		counter++;
 	}
-	counter--;
 	
 	for(u32 ii=0; ii<counter; ii++) {
 		for(u32 jj=1; jj<counter; jj++) {
-			if(offsets[jj] < offsets[jj-1]) {
+			if((offsets[jj] < offsets[jj-1]) || 
+					(offsets[jj-1] == 0)) {
 				u32 temp = offsets[jj-1];
 				offsets[jj-1] = offsets[jj];
 				offsets[jj] = temp;
+				temp = addresses[jj-1];
+				addresses[jj-1] = addresses[jj];
+				addresses[jj] = temp;
 			}
 		}
 	}
@@ -109,21 +112,24 @@ u32 GetFileOffsetDol( char* buffer, u32 address)
 		addresses[counter] = header.addressData[ii];
 		counter++;
 	}
-	counter--;
 	
 	for(u32 ii=0; ii<counter; ii++) {
 		for(u32 jj=1; jj<counter; jj++) {
-			if(offsets[jj] < offsets[jj-1]) {
+			if((addresses[jj] < addresses[jj-1]) || 
+					(addresses[jj-1] == 0)) {
 				u32 temp = offsets[jj-1];
 				offsets[jj-1] = offsets[jj];
 				offsets[jj] = temp;
+				temp = addresses[jj-1];
+				addresses[jj-1] = addresses[jj];
+				addresses[jj] = temp;
 			}
 		}
 	}
 
 	u32 mem = 0;
 	u32 j = 0;
-	for(int i=0; i<counter; i++, j++)
+	for(u32 i=0; i<counter; i++, j++)
 	{
 #ifdef DEBUG
 		cout << "offsetText[" << i << "]: "
