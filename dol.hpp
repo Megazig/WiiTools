@@ -8,15 +8,15 @@
 
 typedef struct
 {
-	u32 offsetText[7];
-	u32 offsetData[11];
-	u32 addressText[7];
-	u32 addressData[11];
-	u32 sizeText[7];
-	u32 sizeData[11];
-	u32 addressBSS;
-	u32 sizeBSS;
-	u32 entrypoint;
+	u32 offsetText[7];		// 0	// 0000
+	u32 offsetData[11];		// 28	// 0012
+	u32 addressText[7];		// 72	// 0048
+	u32 addressData[11];	// 100	// 0064
+	u32 sizeText[7];		// 144	// 0090
+	u32 sizeData[11];		// 172	// 00ac
+	u32 addressBSS;			// 216	// 00d8
+	u32 sizeBSS;			// 220	// 00dc
+	u32 entrypoint;			// 224	// 00e0
 } dolheader;
 
 void FixDolHeaderEndian(dolheader * header);

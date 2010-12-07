@@ -506,7 +506,7 @@ void CreateIDC( char* buffer, u32 length, string sig, bool dol )
 #endif
 }
 
-m_sig ParseMegaLine(char* buffer, u32 length, string sig, bool dol)
+m_sig ParseMegaLine(string sig)
 {
 	m_sig msig;
 	msig.code = "";

@@ -10,8 +10,8 @@ sub compile
 	$program_name =~ s/\..*//;
 	chomp $program_name;
 
-	print "g++ -Wall -O2 -o $program_name common.cpp endian.cpp wii.cpp dol.cpp functions.cpp $cpp_file\n";
-	`g++ -Wall -O2 -o $program_name common.cpp endian.cpp wii.cpp dol.cpp functions.cpp $cpp_file`;
+	print "g++ -g -Wall -O2 -o $program_name common.cpp endian.cpp wii.cpp dol.cpp functions.cpp $cpp_file\n";
+	`g++ -g -Wall -O2 -o $program_name common.cpp endian.cpp wii.cpp dol.cpp functions.cpp $cpp_file`;
 }
 
 compile($ARGV[0]);

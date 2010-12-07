@@ -60,7 +60,7 @@ class Symbol(Struct):
 		return 'StrOffset: %08x - Address: %08x - Section: %08x - ElfHash: %08x - %s' % (self.str_offset,self.symb_address,self.section,self.elf_hash,GetString(self.str_offset))
 
 	def to_idc(self):
-		if self.section != 0xb and self.section != 0x7:
+		if self.section != 0xb and self.section != 0x7 and self.section < 3:
 			addr = segments[self.section]+self.symb_address
 			return 'MakeFunction(0x%08X, BADADDR); MakeName(0x%08X, "%s");' % (addr,addr,GetString(self.str_offset))
 		else:

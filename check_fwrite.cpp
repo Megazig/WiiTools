@@ -237,6 +237,7 @@ int main(int argc, char **argv)
 				dol_index = ii;
 	}
 
+#if 0
 	ifstream memDump(argv[dol_index], ios::in);
 	if ( !memDump )
 	{
@@ -252,6 +253,10 @@ int main(int argc, char **argv)
 	char * buffer = new char[memDumpSize];
 	memDump.read(buffer, memDumpSize);
 	memDump.close();
+#endif
+
+	char* buffer;
+	unsigned int memDumpSize = ReadFile(argv[dol_index], buffer);
 
 	dolheader header;
 	if ( isDol )

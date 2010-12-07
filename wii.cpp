@@ -2,20 +2,12 @@
 
 bool in_mem1( u32 value )
 {
-	if ( value < 0x80000000 )
-		return false;
-	if ( value > 0x81800000 )
-		return false;
-	return true;
+	return (value<0x80000000 || value>0x817fffff) ? false : true;
 }
 
 bool in_mem2( u32 value )
 {
-	if ( value < 0x90000000 )
-		return false;
-	if ( value > 0x94000000 )
-		return false;
-	return true;
+	return (value<0x90000000 || value>0x93ffffff) ? false : true;
 }
 
 char* FindStackUpdate(char* buffer, u32 length)

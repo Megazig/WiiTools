@@ -2,12 +2,7 @@
 
 void ascii( u8 character )
 {
-	if ( character < 0x20 )
-		printf( "." );
-	else if ( character > 0x7f )
-		printf( "." );
-	else
-		printf( "%c" , character );
+	printf("%c", (character<0x1e || character>0x7f) ? '.' : character);
 }
 
 void hexdump( char * pointer , u32 length )
@@ -62,6 +57,24 @@ void stripCarriageReturns( string& StringToModify )
 	StringToModify.erase();
 
 	StringToModify = tempString.substr(startIndex, (endIndex - startIndex + 1));
+}
+
+u32 ReadFile(const char* filename, char* buffer) {
+	ifstream save(filename, ios::in);
+	if(!save)
+	{
+		cout << "File ";
+		cout << filename << "could not be opened" << endl;
+		exit(EXIT_FAILURE);
+	}
+	save.seekg(0, ifstream::end);
+	u32 saveSize = save.tellg();
+	save.seekg(0);
+
+	buffer = new char[saveSize];
+	save.read(buffer, saveSize);
+	save.close();
+	return saveSize;
 }
 
 vector<char> readLine1(char * buffer, int len)

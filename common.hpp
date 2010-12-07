@@ -30,6 +30,7 @@ void hexdump( char * pointer , u32 length );
 void printStringVector( vector<string> lines );
 void printCharVector( vector<char> line );
 void stripCarriageReturns( string& StringToModify );
+u32 ReadFile(const char* filename, char* buffer);
 vector<char> readLine1(char * buffer, int len);
 #if 0
 string readLine2(char * buffer, int len);
