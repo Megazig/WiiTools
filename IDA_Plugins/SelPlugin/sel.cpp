@@ -23,6 +23,8 @@
 
 #define DEBUG 0
 
+typedef unsigned int u32;
+
 /***************************************************************
 * Function:	 init
 * Description:
@@ -104,6 +106,53 @@ int read_section_table(FILE *fp, section_entry *entries, int offset, int count)
 	return(1);
 }
 
+u32 get_next_segment(u32* segments, u32 count, u32 addr)
+{
+	u32 next = BADADDR;
+	for(u32 ii = 0; ii < count; ii++) {
+		if((segments[ii] > addr) && (segments[ii] < next))
+			next = segments[ii];
+	}
+	return next;
+}
+
+u32 check_previous_segment_ends(u32* segments, u32 count, u32 start, u32 end)
+{
+	bool changed = false;
+	u32 next = end;
+	for(u32 ii = 0; ii < count; ii++) {
+		if( (changed == true) && (segments[ii] > next) ) {
+			next = segments[ii];
+			continue;
+		}
+		if( (segments[ii] > start) && (next == BADADDR) ) {
+			next = segments[ii];
+			changed = true;
+			continue;
+		}
+	}
+	return next;
+}
+
+void fixup_functions()
+{
+	int segment_qty = get_segm_qty();
+	segment_t *segment;
+	for(size_t count = 0; count < segment_qty; count++) {
+		segment = getnseg(count);
+		char tBuf[0x20] = {0};
+		get_segm_class(segment, tBuf, 0x20);
+		if(memcmp(tBuf, "CODE", 4))
+			continue;
+		ea_t start = segment->startEA;
+		ea_t end   = segment->endEA;
+		for(u32 ii = start; ii < end; ii += 4) {
+			if(!get_func(ii))
+				add_func(ii, BADADDR);
+		}
+	}
+}
+
 /******************************************************************
 * Function:	 run
 * Description:  entry function of the plugin
@@ -127,10 +176,10 @@ void idaapi run(int ZF_arg)
 			"_f_rodata", \
 			"_f_data", \
 			"_f_bss", \
-			"_f_sdata", \
+			"_f_sbss", \
 			"_f_sdata2", \
 			"_f_zero", \
-			"_f_sbss", \
+			"_f_sdata", \
 			"_f_sbss2", \
 			"_f_zero2" \
 	};
@@ -184,67 +233,89 @@ void idaapi run(int ZF_arg)
 		char nom[0x50];
 		qfseek(fp, nam+ent.name_off, SEEK_SET);
 		qfread(fp, &nom, 0x50);
-		if(!memcmp(nom, "_f_init", 7)) {
+		if(!memcmp(nom, "_f_init", 8)) {
 			sections[1] = ent.section_off;
-		}else if(!memcmp(nom, "_f_text", 7)) {
+		}else if(!memcmp(nom, "_f_text", 8)) {
 			sections[2] = ent.section_off;
-		}else if(!memcmp(nom, "_f_ctors", 8)) {
+		}else if(!memcmp(nom, "_f_ctors", 9)) {
 			sections[3] = ent.section_off;
-		}else if(!memcmp(nom, "_f_dtors", 8)) {
+		}else if(!memcmp(nom, "_f_dtors", 9)) {
 			sections[4] = ent.section_off;
-		}else if(!memcmp(nom, "_f_rodata", 9)) {
+		}else if(!memcmp(nom, "_f_rodata", 10)) {
 			sections[5] = ent.section_off;
-		}else if(!memcmp(nom, "_f_data", 7)) {
+		}else if(!memcmp(nom, "_f_data", 8)) {
 			sections[6] = ent.section_off;
-		}else if(!memcmp(nom, "_f_bss", 6)) {
+		}else if(!memcmp(nom, "_f_bss", 7)) {
 			sections[7] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sdata", 8)) {
+		}else if(!memcmp(nom, "_f_sbss", 8)) {
 			sections[8] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sdata2", 9)) {
+		}else if(!memcmp(nom, "_f_sdata2", 10)) {
 			sections[9] = ent.section_off;
-		}else if(!memcmp(nom, "_f_zero", 7)) {
+		}else if(!memcmp(nom, "_f_zero", 8)) {
 			sections[10] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sbss", 7)) {
+		}else if(!memcmp(nom, "_f_sdata", 9)) {
 			sections[11] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sbss2", 8)) {
+		}else if(!memcmp(nom, "_f_sbss2", 9)) {
 			sections[12] = ent.section_off;
-		}else if(!memcmp(nom, "_f_zero2", 8)) {
+		}else if(!memcmp(nom, "_f_zero2", 9)) {
 			sections[13] = ent.section_off;
 		}
 	}
 
+	/* SHOW A WAIT BOX TO LET EU KNOW WE MEAN BUSINESS */
+	show_wait_box("Doing something cool");
+
 	/* create segments */
-	//delete segments
-	/*
 	int segment_qty = get_segm_qty();
+	int old_segment_qty = segment_qty;
 	segment_t *segment;
-	for(size_t count = segment_qty - 1; count < segment_qty; count++) {
-		segment = getnseg(0);
+	//get current segment addresses
+	unsigned int previous_segment_strt[0x20] = {0};
+	unsigned int previous_segment_ends[0x20] = {0};
+	for(size_t count = 0; count < segment_qty; count++) {
+		segment = getnseg(count);
 		ea_t start = segment->startEA;
 		ea_t end   = segment->endEA;
-		msg("Deleting segment (%08x-%08x) ...\n", start, end);
-		del_segm( start, SEGDEL_PERM );
+		previous_segment_strt[count] = start;
+		previous_segment_ends[count] = end;
 	}
-	*/
+	//delete segments
+	for(size_t count = 0; count < segment_qty; count++) {
+		if(count == 0)
+			continue;
+		segment = getnseg(count);
+		ea_t start = segment->startEA;
+		ea_t end   = segment->endEA;
+		/*
+		char tSegName[0x80] = {0};
+		get_segm_name(segment, tSegName, 0x80);
+		if(!memcmp(tSegName, ".bss", 4)) {
+			segment_qty -= 1;
+			count--;
+			del_segm(start, SEGDEL_KEEP);
+		}
+		*/
+		segment_qty -= 1;
+		count--;
+		del_segm( start, SEGDEL_KEEP );
+	}
 	//create new ones
 	for(unsigned int ii = 1; ii < 14; ii++ ) {
 		if(!sections[ii])
 			continue;
 		ea_t start = sections[ii];
 		//FIXME
-		ea_t end   = BADADDR;
-		//msg("Creating a new segment  (%08x-%08x) ...", start, end);
-		if( (ii==1) || (ii==2) || (ii==5) ) {
+		ea_t end   = get_next_segment(sections, 14, start);
+		end = check_previous_segment_ends(previous_segment_ends, old_segment_qty, start, end);
+		if( (ii==1) || (ii==2) ) {
 			add_segm(1, sections[ii], end, section_names[ii], "CODE");
 		}else if( (ii==7) || (ii==11) || (ii==12) ) {
 			add_segm(1, sections[ii], end, section_names[ii], "BSS");
 		}else{
 			add_segm(1, sections[ii], end, section_names[ii], "DATA");
 		}
-		//msg(" ...");
 		/* set adderssing mode to 32 bit */
 		set_segm_addressing( getseg(sections[ii]), 1 );
-		//msg(" OK\n");
 	}
 
 	/* loop through symbols */
@@ -267,11 +338,11 @@ void idaapi run(int ZF_arg)
 		qfseek(fp, nam+ent.name_off, SEEK_SET);
 		qfread(fp, &nom, 0x80);
 		if( ent.section_num > 13 ) {
-			msg("FATAL ERROR: invalid section ID (%d) for %d\n", ent.section_num, which);
+			msg("ERROR: invalid section ID (%d) for %d\n", ent.section_num, which);
 			continue;
 		}
 		if( sections[ent.section_num] == 0 ) {
-			msg("FATAL ERROR: no address for section ID (%d) [%s]\n", ent.section_num, nom);
+			msg("ERROR: no address for section ID (%d) [%s]\n", ent.section_num, nom);
 			continue;
 		}
 		if( (ent.section_num==1) || (ent.section_num==2) || (ent.section_num==5) ) {
@@ -281,12 +352,18 @@ void idaapi run(int ZF_arg)
 	}
 
 	qfclose(fp);
+
+	/* FIXUP CODE SEGMENTS TO FUNCTIONS */
+	fixup_functions();
+
+	/* HIDE THAT DARNED WAIT BOX BECAUSE WE FINISHED */
+	hide_wait_box();
 }
 
 //-----------------------------------------------------------------
 char comment[] = "This is gets segments and naming from a SEL file.";
 char help[]	= "Import SEL file\n\n";
-char wanted_name[]   = "SEL Loader.";
+char wanted_name[]   = "SEL Loader";
 char wanted_hotkey[] = "Alt-S";
 
 //-----------------------------------------------------------------

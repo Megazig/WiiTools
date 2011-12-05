@@ -121,7 +121,7 @@ def main():
 	SymbolCount = header.exportTableLength / 0x10
 	Symbols = []
 
-	segment_naming = ['None', '_f_init', '_f_text', '_f_ctors', '_f_dtors', '_f_rodata', '_f_data', '_f_bss', '_f_sdata', '_f_sdata2', '_f_zero', '_f_sbss', '_f_sbss2', '_f_zero2' ]
+	segment_naming = ['None', '_f_init', '_f_text', '_f_ctors', '_f_dtors', '_f_rodata', '_f_data', '_f_bss', '_f_sbss', '_f_sdata2', '_f_zero', '_f_sdata', '_f_sbss2', '_f_zero2' ]
 	segments = { }
 	for i in xrange(SymbolCount):
 		s = Symbol()
@@ -129,12 +129,16 @@ def main():
 		if s.section == 0xfff1:
 			name = GetString(s.str_offset)
 			segments[name] = s.symb_address
+			if not DoIDC and not MakeMap:
+				print name, hex(s.symb_address)
 			'''
 			if name not in segment_naming:
 				print "Bad naming", name
 			else:
 				print "Ok  naming", name, segment_naming.index(name)
 			'''
+	if not DoIDC and not MakeMap:
+		print
 
 	for i in xrange(SymbolCount):
 		s = Symbol()
