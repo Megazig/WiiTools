@@ -154,7 +154,10 @@ void idaapi run(int ZF_arg)
 	fp = qfopen(filename, "r+b");
 	if(!fp) {
 		msg("Error opening file %s\n", filename);
-		return;
+		char* chosen_name = askfile_c(1, "*.sel", "Please choose a .sel file");
+		fp = qfopen(chosen_name, "r+b");
+		if(!fp)
+			return;
 	}
   
 	/* read sel header into memory */
