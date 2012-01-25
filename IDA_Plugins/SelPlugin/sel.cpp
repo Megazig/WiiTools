@@ -21,7 +21,7 @@
 #include <nalt.hpp>
 #include "sel.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 typedef unsigned int u32;
 
@@ -106,34 +106,6 @@ int read_section_table(FILE *fp, section_entry *entries, int offset, int count)
 	return(1);
 }
 
-u32 get_next_segment(u32* segments, u32 count, u32 addr)
-{
-	u32 next = BADADDR;
-	for(u32 ii = 0; ii < count; ii++) {
-		if((segments[ii] > addr) && (segments[ii] < next))
-			next = segments[ii];
-	}
-	return next;
-}
-
-u32 check_previous_segment_ends(u32* segments, u32 count, u32 start, u32 end)
-{
-	bool changed = false;
-	u32 next = end;
-	for(u32 ii = 0; ii < count; ii++) {
-		if( (changed == true) && (segments[ii] > next) ) {
-			next = segments[ii];
-			continue;
-		}
-		if( (segments[ii] > start) && (next == BADADDR) ) {
-			next = segments[ii];
-			changed = true;
-			continue;
-		}
-	}
-	return next;
-}
-
 void fixup_functions()
 {
 	int segment_qty = get_segm_qty();
@@ -151,6 +123,135 @@ void fixup_functions()
 				add_func(ii, BADADDR);
 		}
 	}
+}
+
+// Get a lis/addi pair - using u32 based offsets
+unsigned int get_combined_address(unsigned int first, unsigned int second, unsigned int start)
+{
+	unsigned int ret1 = (get_long( start +  first*4 ) & 0xffff) << 16;
+	unsigned int ret2 = (get_long( start + second*4 ) & 0xffff) << 0;
+	if(ret2 >= 0x8000)
+		ret1 -= (0x10000 - ret2);
+	else
+		ret1 += ret2;
+	return ret1;
+}
+
+//0x00000001 == bl
+//0x00000002 == mem_off
+u32 RsoLink[] = {
+	0x9421ffb0, 0x7c0802a6, 0x90010054, 0x39610050,
+	0x00000001, 0x8083000c, 0x3a800000, 0x80030010,
+	0x00000002, 0x7d441a14, 0x80a30030, 0x7d201a14,
+	0x80830038, 0x7d051a14, 0x80030040, 0x7ce41a14,
+	0x80a30048, 0x7cc01a14, 0x8083004c, 0x80030054,
+	0x7ca51a14, 0x7c841a14, 0x00000002, 0x7c001a14,
+	0x00000002, 0x00000002, 0x00000002, 0x00000002,
+	0x00000002, 0x00000002, 0x00000002, 0x00000002,
+	0x9a830023, 0x7c7f1b78, 0x00000002, 0x9143000c,
+	0x00000002, 0x00000002, 0x00000002, 0x91230010,
+	0x00000002, 0x00000002, 0x00000002, 0x91030030,
+	0x00000002, 0x00000002, 0x00000002, 0x90e30038,
+	0x3a200001, 0x39e00004, 0x3a400008, 0x90c30040,
+	0x00000002, 0x90a30048, 0x9083004c, 0x90030054,
+	0x480000f0, 0x801f000c, 0x2811000d, 0x7e009214,
+	0x418100b4, 0x00000002, 0x7c63782e, 0x7c6903a6,
+	0x4e800420, 0x92d00000, 0x480000bc, 0x92f00000,
+	0x480000b4, 0x80b00004, 0x2c050000, 0x41820014,
+	0x7e248b78, 0x00000002, 0x4cc63182, 0x00000001,
+	0x92900000, 0x48000090, 0x80b00004, 0x2c050000,
+	0x41820014, 0x7e248b78, 0x00000002, 0x4cc63182,
+	0x00000001, 0x92900000, 0x4800006c, 0x93100000,
+	0x48000064, 0x93300000, 0x4800005c, 0x93500000,
+	0x48000054, 0x93700000, 0x4800004c, 0x93900000,
+	0x48000044, 0x93b00000, 0x4800003c, 0x93d00000,
+	0x48000034, 0x92900000, 0x4800002c, 0x92900000,
+	0x48000024, 0x80b00004, 0x2c050000, 0x41820014,
+	0x7e248b78, 0x00000002, 0x4cc63182, 0x00000001,
+	0x92900000, 0x3a520008, 0x3a310001, 0x39ef0004,
+	0x801f0008, 0x7c110040, 0x4180ff0c, 0x3c60aaab,
+	0x801f003c, 0x3863aaab, 0x38800000, 0x7c030016,
+	0x5405e8ff, 0x418200fc, 0x28050008, 0x38c5fff8,
+	0x408100c4, 0x38060007, 0x38600000, 0x5400e8fe,
+	0x7c0903a6, 0x28060000, 0x408100ac, 0x80df0038,
+	0x38840008, 0x7c06182e, 0x7c00fa14, 0x7c06192e,
+	0x801f0038, 0x7cc01a14, 0x8006000c, 0x7c00fa14,
+	0x9006000c, 0x801f0038, 0x7cc01a14, 0x80060018,
+	0x7c00fa14, 0x90060018, 0x801f0038, 0x7cc01a14,
+	0x80060024, 0x7c00fa14, 0x90060024, 0x801f0038,
+	0x7cc01a14, 0x80060030, 0x7c00fa14, 0x90060030,
+	0x801f0038, 0x7cc01a14, 0x8006003c, 0x7c00fa14,
+	0x9006003c, 0x801f0038, 0x7cc01a14, 0x80060048,
+	0x7c00fa14, 0x90060048, 0x801f0038, 0x7cc01a14,
+	0x38630060, 0x80060054, 0x7c00fa14, 0x90060054,
+	0x4200ff5c, 0x7c042850, 0x1cc4000c, 0x7c0903a6,
+	0x7c042840, 0x4080001c, 0x807f0038, 0x7c03302e,
+	0x7c00fa14, 0x7c03312e, 0x38c6000c, 0x4200ffec,
+	0x39610050, 0x38600001, 0x00000001, 0x80010054,
+	0x7c0803a6, 0x38210050, 0x4e800020,
+};
+bool find_RsoLink(unsigned int* sections)
+{
+	int segment_qty = get_segm_qty();
+	segment_t *segment;
+	for(size_t count = 0; count < segment_qty; count++) {
+		segment = getnseg(count);
+		char tBuf[0x20] = {0};
+		get_segm_class(segment, tBuf, 0x20);
+		if(memcmp(tBuf, "CODE", 4))
+			continue;
+		ea_t start = segment->startEA;
+		ea_t end   = segment->endEA;
+		size_t length = end - start;
+		if(sizeof(RsoLink) > length)
+			continue;
+		msg("Size of RsoLink: %08x", sizeof(RsoLink));
+		for(u32 ii = start; ii < end - sizeof(RsoLink); ii += 4) {
+			for(u32 jj = 0; jj < sizeof(RsoLink); jj+=4) {
+				if(RsoLink[jj/4] == 0x00000001)
+					continue;
+				if(RsoLink[jj/4] == 0x00000002)
+					continue;
+				if(RsoLink[jj/4] != get_long(ii + jj))
+					break;
+				if(jj == sizeof(RsoLink) - 4) {
+					msg("Found RsoLink: %08x", ii);
+					sections[0] = 0;
+					//r22
+					sections[1] = get_combined_address(31, 46, ii);
+					msg("Section1: %08x\n", sections[1]);
+					//r23
+					sections[2] = get_combined_address(30, 45, ii);
+					msg("Section2: %08x\n", sections[2]);
+					//ctors - 0
+					sections[3] = 0;
+					//dtors - 0
+					sections[4] = 0;
+					//r24
+					sections[5] = get_combined_address(29, 44, ii);
+					//r25
+					sections[6] = get_combined_address(28, 42, ii);
+					//r26
+					sections[7] = get_combined_address(27, 41, ii);
+					//r27
+					sections[8] = get_combined_address(26, 40, ii);
+					//r29
+					sections[9] = get_combined_address(24, 37, ii);
+					// - 0
+					sections[10] = 0;
+					//r28
+					sections[11] = get_combined_address(25, 38, ii);
+					//r30
+					sections[12] = get_combined_address(22, 36, ii);
+					// - 0
+					sections[13] = 0;
+					return true;
+				}
+			}
+		}
+	}
+	msg("[ERROR] RsoLink not found!!!\n");
+	return false;
 }
 
 /******************************************************************
@@ -214,109 +315,20 @@ void idaapi run(int ZF_arg)
 		msg("Error reading sel header into memory\n");
 		return;
 	}
-  
+
 	/* get section list */
 	unsigned int sections[14] = {0};
+	if(!find_RsoLink(sections)) {
+		qfclose(fp);
+		return;
+	}
+  
 	unsigned int off = rhdr.ExportTableOffset;
 	unsigned int len = rhdr.ExportTableLength;
 	unsigned int nam = rhdr.ExportTableNames;
-	for(unsigned int ii = off; ii < off+len; ii += sizeof(export_table_entry)) {
-		export_table_entry ent;
-		qfseek(fp, ii, SEEK_SET);
-		qfread(fp, &ent, sizeof(export_table_entry));
-		ent.name_off = swap32(ent.name_off);
-		ent.section_off = swap32(ent.section_off);
-		ent.section_num = swap32(ent.section_num);
-		ent.elf_hash = swap32(ent.elf_hash);
-		if(ent.section_num != 0xfff1)
-			continue;
-		char nom[0x50];
-		qfseek(fp, nam+ent.name_off, SEEK_SET);
-		qfread(fp, &nom, 0x50);
-		if(!memcmp(nom, "_f_init", 8)) {
-			sections[1] = ent.section_off;
-		}else if(!memcmp(nom, "_f_text", 8)) {
-			sections[2] = ent.section_off;
-		}else if(!memcmp(nom, "_f_ctors", 9)) {
-			sections[3] = ent.section_off;
-		}else if(!memcmp(nom, "_f_dtors", 9)) {
-			sections[4] = ent.section_off;
-		}else if(!memcmp(nom, "_f_rodata", 10)) {
-			sections[5] = ent.section_off;
-		}else if(!memcmp(nom, "_f_data", 8)) {
-			sections[6] = ent.section_off;
-		}else if(!memcmp(nom, "_f_bss", 7)) {
-			sections[7] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sbss", 8)) {
-			sections[8] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sdata2", 10)) {
-			sections[9] = ent.section_off;
-		}else if(!memcmp(nom, "_f_zero", 8)) {
-			sections[10] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sdata", 9)) {
-			sections[11] = ent.section_off;
-		}else if(!memcmp(nom, "_f_sbss2", 9)) {
-			sections[12] = ent.section_off;
-		}else if(!memcmp(nom, "_f_zero2", 9)) {
-			sections[13] = ent.section_off;
-		}
-	}
 
 	/* SHOW A WAIT BOX TO LET EU KNOW WE MEAN BUSINESS */
 	show_wait_box("Doing something cool");
-
-	/* create segments */
-	int segment_qty = get_segm_qty();
-	int old_segment_qty = segment_qty;
-	segment_t *segment;
-	//get current segment addresses
-	unsigned int previous_segment_strt[0x20] = {0};
-	unsigned int previous_segment_ends[0x20] = {0};
-	for(size_t count = 0; count < segment_qty; count++) {
-		segment = getnseg(count);
-		ea_t start = segment->startEA;
-		ea_t end   = segment->endEA;
-		previous_segment_strt[count] = start;
-		previous_segment_ends[count] = end;
-	}
-	//delete segments
-	for(size_t count = 0; count < segment_qty; count++) {
-		if(count == 0)
-			continue;
-		segment = getnseg(count);
-		ea_t start = segment->startEA;
-		ea_t end   = segment->endEA;
-		/*
-		char tSegName[0x80] = {0};
-		get_segm_name(segment, tSegName, 0x80);
-		if(!memcmp(tSegName, ".bss", 4)) {
-			segment_qty -= 1;
-			count--;
-			del_segm(start, SEGDEL_KEEP);
-		}
-		*/
-		segment_qty -= 1;
-		count--;
-		del_segm( start, SEGDEL_KEEP );
-	}
-	//create new ones
-	for(unsigned int ii = 1; ii < 14; ii++ ) {
-		if(!sections[ii])
-			continue;
-		ea_t start = sections[ii];
-		//FIXME
-		ea_t end   = get_next_segment(sections, 14, start);
-		end = check_previous_segment_ends(previous_segment_ends, old_segment_qty, start, end);
-		if( (ii==1) || (ii==2) ) {
-			add_segm(1, sections[ii], end, section_names[ii], "CODE");
-		}else if( (ii==7) || (ii==11) || (ii==12) ) {
-			add_segm(1, sections[ii], end, section_names[ii], "BSS");
-		}else{
-			add_segm(1, sections[ii], end, section_names[ii], "DATA");
-		}
-		/* set adderssing mode to 32 bit */
-		set_segm_addressing( getseg(sections[ii]), 1 );
-	}
 
 	/* loop through symbols */
 	/* set naming */
@@ -324,7 +336,7 @@ void idaapi run(int ZF_arg)
 	for(unsigned int ii = off; ii < off+len; ii += sizeof(export_table_entry)) {
 		which++;
 #if DEBUG
-		if (which > 0x100)
+		if (which > 0x1000)
 			break;
 #endif
 		export_table_entry ent;
@@ -345,6 +357,7 @@ void idaapi run(int ZF_arg)
 			msg("ERROR: no address for section ID (%d) [%s]\n", ent.section_num, nom);
 			continue;
 		}
+		//FIXME - rodata==5
 		if( (ent.section_num==1) || (ent.section_num==2) || (ent.section_num==5) ) {
 			add_func(sections[ent.section_num]+ent.section_off, BADADDR);
 		}
@@ -353,8 +366,9 @@ void idaapi run(int ZF_arg)
 
 	qfclose(fp);
 
+	/* TODO uncomment to allow CODE sections to be made into all code/functions */
 	/* FIXUP CODE SEGMENTS TO FUNCTIONS */
-	fixup_functions();
+	//fixup_functions();
 
 	/* HIDE THAT DARNED WAIT BOX BECAUSE WE FINISHED */
 	hide_wait_box();
