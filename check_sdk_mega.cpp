@@ -122,7 +122,8 @@ int main(int argc, char **argv)
 	u32 offset = 0;
 	for(u32 stri = 0; stri < sigs.size(); stri++)
 	{
-		m_sig sig = ParseMegaLine(tmpBuf, size, sigs[stri], isDol);
+		//m_sig sig = ParseMegaLine(tmpBuf, size, sigs[stri], isDol);
+		m_sig sig = ParseMegaLine(sigs[stri]);
 		function_instance instance = FindMSig(tmpBuf, size, offset, sig, isDol);
 		if(instance.buffer_location)
 		{
