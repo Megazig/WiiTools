@@ -337,8 +337,8 @@ void DumpSigInfo( string sig )
 	cout << funcName << endl;
 	for(u32 ii=0; ii < refs.size(); ii++)
 	{
-		cout << dec << refs[ii].first << "\t"
-			<< refs[ii].second << endl;;
+		cout << "\t" << dec << refs[ii].first << "\t"
+			<< refs[ii].second << endl;
 	}
 }
 
