@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 	memDump.close();
 #endif
 
-	char* buffer;
+	char* buffer = NULL;
 	unsigned int memDumpSize = ReadFile(argv[dol_index], buffer);
 
 	dolheader header;
