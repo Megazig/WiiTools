@@ -18,11 +18,7 @@ int main(int argc, char **argv)
 	bool createIDC = false;
 	bool ordered = false;
 	bool expanded = false;
-
-	//FIXME
-	bool arguments[argc];
-	for(int ii=0; ii<argc; ii++)
-		arguments[ii] = false;
+	std::vector<bool> arguments(argc, false);
 
 	if ( argc < 3 )
 	{
