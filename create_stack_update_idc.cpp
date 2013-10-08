@@ -16,10 +16,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
 	bool isDol = false;
-
-	bool arguments[argc];
-	for(int ii=0; ii<argc; ii++)
-		arguments[ii] = false;
+	std::vector<bool> arguments(argc, false);
 
 	if ( argc < 2 )
 	{
